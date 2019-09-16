@@ -22,10 +22,15 @@ void loop() {}
 
 
 void startTimer(int frequencyHz1){
-  //16 bit top = 65526. 48Mhz clock. Dividing clock by 4 and 64. This equals 187500, or about 3 full cycles
-  
-  REG_GCLK_CLKCTRL =(uint16_t)(GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0| GCLK_CLKCTRL_ID_TCC2_TC3);//set up TC3
-  GCLK->GENDIV.reg = GCLK_GENDIV_ID(0) | GCLK_GENDIV_DIV(64);
+  //16 bit top = 65526. 48Mhz clock. Dividing clock by 4 and 64. This equals 187500, or about 3 full cycles(1/3 of a second)
+
+  //I switched to GCLK2. I'm not sure why, but I was having a ton of issues with GCLK0 not working correctly(wouldn't print to serial port, had no way of testing besides light)
+  REG_GCLK_CLKCTRL =(uint16_t)(GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK2| GCLK_CLKCTRL_ID_TCC2_TC3);//set up TC3
+  GCLK->GENCTRL.reg = GCLK_GENCTRL_ID(2)  |
+                      GCLK_GENCTRL_GENEN  |
+                      GCLK_GENCTRL_DIVSEL |
+                      GCLK_GENCTRL_SRC(7);  
+  GCLK->GENDIV.reg = GCLK_GENDIV_ID(2) | GCLK_GENDIV_DIV(5);//2^(5+1) = 64
   
   while(GCLK->STATUS.bit.SYNCBUSY ==1);// wait for sync
   
@@ -46,7 +51,7 @@ void startTimer(int frequencyHz1){
 
 void TC3_Handler(){
   blueLightState++;
-  if(blueLightState == 6){//i have no idea why its 6. I'm trying to make it turn the blue light on and off second(which should be three times 3 times). However, that makes it go only every 2 times???? 
+  if(blueLightState == 3){
     blueLightState = 0;
     int blueLED = digitalRead(PIN_LED_13);
     if(blueLED == 1){
